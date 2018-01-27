@@ -27,7 +27,8 @@ const initialState = {
   open2:'',
   open2index:'',
   Gap: false,
-  score: 0
+  score: 0,
+  clicks : 0
 }
 
 class Memgrid extends React.Component {
@@ -41,16 +42,18 @@ class Memgrid extends React.Component {
     let arr =this.state.visible;
     //alert('clicked');
     let originalArr = this.state.OriginalTiles;
-    console.log("before" + this.state.visible[id]);
+    //console.log("before" + this.state.visible[id]);
+    let numberOfClicks = this.state.clicks;
+    numberOfClicks = numberOfClicks + 1;
 
     //this.setState({});
-    console.log(this.state.visible[id]);
+    //console.log(this.state.visible[id]);
     if(this.state.open1 == '' || this.state.open2 == '')
     {
     if(this.state.visible[id] == 'X')
     {
       arr[id] = originalArr[id];
-      console.log("entered");
+      //("entered");
     this.setState({visible: arr});
     if(this.state.open1=='' )
     {
@@ -67,13 +70,15 @@ class Memgrid extends React.Component {
     }
   }
   }
+    this.setState({clicks: numberOfClicks});
 }
 }
 
   resetStateforOpen()
   {
-    let count = this.state.score + 2
+    let count = this.state.score + 2;
     this.setState({open1: '', open2: '', score:count});
+
 
   }
   resetState()
@@ -81,8 +86,8 @@ class Memgrid extends React.Component {
     let arr = this.state.visible;
     let count = this.state.score - 1;
 
-    console.log("before visible is");
-    console.log(this.state.visible);
+    //console.log("before visible is");
+    //console.log(this.state.visible);
     arr[this.state.open1index] = 'X';
     arr[this.state.open2index] = 'X';
     this.setState({open1:'', open2: '', open1index:'',open2index:'', score: count, visible : arr, Gap:false});
@@ -105,10 +110,18 @@ class Memgrid extends React.Component {
         b.className += " disabledc";
         this.interval = setTimeout(this.tick.bind(this), 1000);
         b.classList.remove("disabledc");
+        document.getElementById("clickStatus").innerHTML = "Try Again! :("
       }
       else {
         this.resetStateforOpen();
-        alert('congo you got it, detective!!');
+        if (this.state.visible.indexOf('X') == -1)
+        {
+          document.getElementById("clickStatus").innerHTML = "Congrats!! You Won!! :D"
+        }
+        else{
+          document.getElementById("clickStatus").innerHTML = "Good Move! :)"
+        }
+
       }
 
     }
@@ -120,7 +133,7 @@ class Memgrid extends React.Component {
     {
     //console.log(b.className);
     this.resetState();
-    console.log("i am back");
+  //  console.log("i am back");
 
    clearInterval(this.interval);
 
@@ -155,7 +168,7 @@ class Memgrid extends React.Component {
   </div>
   </div>
   <div className="col-6">
-  <Score value = {this.state.score} onClick = {() => {this.reset()}} />
+  <Score value = {this.state.score} onClick = {() => {this.reset()}} Clicks = {this.state.clicks} />
   </div>
   </div>
 )
@@ -171,7 +184,9 @@ function Score(props)
 {
   return (<div className ="score">
   <h1> Score : {props.value}</h1><br />
-  <Button className ="btn btn-primary" onClick = {props.onClick}>Reset Game </Button></div>
+  <Button className ="btn btn-primary" onClick = {props.onClick}>Reset Game </Button><br />
+  <strong>Number of Clicks : {props.Clicks} </strong>
+  <div id="clickStatus"></div></div>
 
 );
 }
