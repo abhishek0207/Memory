@@ -1,0 +1,7 @@
+<script >
+window.gameState = "<%= @game  %>";
+</script>
+<h1 style="margin-top:20px"> Welcome to Memory Game, <%= @game  %> </h1>
+<div id="game">
+  Loading...
+</div>

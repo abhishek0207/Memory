@@ -41169,12 +41169,30 @@ require.register("js/app.js", function(exports, require, module) {
 
 require("phoenix_html");
 
+var _socket = require("./socket");
+
+var _socket2 = _interopRequireDefault(_socket);
+
 var _memory = require("./memory");
 
 var _memory2 = _interopRequireDefault(_memory);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// Import local files
+//
+// Local files can be imported directly using relative
+// paths "./socket" or full ones "web/static/js/socket".
+
+function init() {
+  var root = document.getElementById('game');
+  if (root) {
+    var channel = _socket2.default.channel("room:" + window.gameState, {});
+    (0, _memory2.default)(root, channel);
+  }
+}
+
+// Use jQuery to delay until page loaded.
 // Brunch automatically concatenates all files in your
 // watched paths. Those paths can be configured at
 // config.paths.watched in "brunch-config.js".
@@ -41188,21 +41206,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //
 // If you no longer want to use a dependency, remember
 // to also remove its path from "config.paths.watched".
-function init() {
-  var root = document.getElementById('game');
-  (0, _memory2.default)(root);
-}
-
-// Use jQuery to delay until page loaded.
-
-
-// Import local files
-//
-// Local files can be imported directly using relative
-// paths "./socket" or full ones "web/static/js/socket".
-
-// import socket from "./socket"
-
 $(init);
 
 });
@@ -41334,31 +41337,21 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-function mem_start(root) {
-  _reactDom2.default.render(_react2.default.createElement(Memgrid, null), root);
+function mem_start(root, channel) {
+  _reactDom2.default.render(_react2.default.createElement(Memgrid, { channel: channel }), root);
 }
 
-function loadTiles() {
-  var tiles = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  var index = tiles.length;
-  for (var i = index - 1; i > 0; i--) {
-    var randomIndex = Math.floor(Math.random() * i + 1);
-    var temp_var = tiles[i];
-    tiles[i] = tiles[randomIndex];
-    tiles[randomIndex] = temp_var;
-  }
-  return tiles;
-}
-
-var initialState = {
-  OriginalTiles: loadTiles(),
-  visible: ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'],
+var exinitialState = {
+  OriginalTiles: [],
+  visible: [],
   open1: '',
   open1index: '',
   open2: '',
   open2index: '',
   Gap: false,
-  score: 0
+  score: 0,
+  clicks: 0
+
 };
 
 var Memgrid = function (_React$Component) {
@@ -41369,91 +41362,69 @@ var Memgrid = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (Memgrid.__proto__ || Object.getPrototypeOf(Memgrid)).call(this, props));
 
-    _this.state = initialState;
+    _this.state = exinitialState;
+    _this.channel = props.channel;
+    _this.channel.join().receive("ok", _this.gotView.bind(_this)).receive("error", function (resp) {
+      console.log("Unable to join", resp);
+    });
+
     return _this;
   }
 
   _createClass(Memgrid, [{
-    key: 'updateState',
-    value: function updateState(val, id) {
-      var arr = this.state.visible;
-      //alert('clicked');
-      var originalArr = this.state.OriginalTiles;
-      console.log("before" + this.state.visible[id]);
-
-      //this.setState({});
-      console.log(this.state.visible[id]);
-      if (this.state.open1 == '' || this.state.open2 == '') {
-        if (this.state.visible[id] == 'X') {
-          arr[id] = originalArr[id];
-          console.log("entered");
-          this.setState({ visible: arr });
-          if (this.state.open1 == '') {
-            this.setState({ open1: arr[id] });
-            this.setState({ open1index: id });
-            this.setState({ Gap: false });
-          } else {
-            if (this.state.open2 == '') {
-              this.setState({ open2: arr[id] });
-              this.setState({ open2index: id });
-              this.setState({ Gap: true });
-            }
-          }
-        }
-      }
-    }
-  }, {
-    key: 'resetStateforOpen',
-    value: function resetStateforOpen() {
-      var count = this.state.score + 2;
-      this.setState({ open1: '', open2: '', score: count });
-    }
-  }, {
-    key: 'resetState',
-    value: function resetState() {
-      var arr = this.state.visible;
-      var count = this.state.score - 1;
-
-      console.log("before visible is");
-      console.log(this.state.visible);
-      arr[this.state.open1index] = 'X';
-      arr[this.state.open2index] = 'X';
-      this.setState({ open1: '', open2: '', open1index: '', open2index: '', score: count, visible: arr, Gap: false });
-      //this.state.Gap = false;
-    }
-  }, {
-    key: 'reset',
-    value: function reset() {
-      this.setState(initialState);
-      this.setState({ visible: ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'] });
-    }
-  }, {
     key: 'componentDidUpdate',
     value: function componentDidUpdate() {
+      console.log("entered update handler");
       var open1 = this.state.open1;
       var open2 = this.state.open2;
-      if (open != '' && open2 != '') {
+      var open1index = this.state.open1index;
+      var open2index = this.state.open2index;
+      var score = this.state.score;
+
+      if (open1 != "" && open2 != "") {
         if (open1 != open2) {
           var b = document.getElementById("Board");
           b.className += " disabledc";
           this.interval = setTimeout(this.tick.bind(this), 1000);
-          b.classList.remove("disabledc");
-        } else {
-          this.resetStateforOpen();
-          alert('congo you got it, detective!!');
+          document.getElementById("clickStatus").innerHTML = "Try Again! :(";
+        }
+
+        if (open1 == open2) {
+          document.getElementById("clickStatus").innerHTML = "Good Move!! Keep Going";
+        }
+
+        if (this.state.visible.indexOf("X") == -1) {
+          document.getElementById("clickStatus").innerHTML = "Congrats!!! You are the champ!! :D :D";
         }
       }
     }
   }, {
     key: 'tick',
     value: function tick() {
-      if (this.state.open1 != '' && this.state.open2 != '') {
-        //console.log(b.className);
-        this.resetState();
-        console.log("i am back");
-
-        clearInterval(this.interval);
-      }
+      var open1 = this.state.open1;
+      var open2 = this.state.open2;
+      var open1index = this.state.open1index;
+      var open2index = this.state.open2index;
+      var b = document.getElementById("Board");
+      this.channel.push("handleupdates", { open1: open1, open2: open2, open1index: open1index, open2index: open2index }).receive("ok", this.gotView.bind(this));
+      clearInterval(this.interval);
+      b.classList.remove("disabledc");
+    }
+  }, {
+    key: 'gotView',
+    value: function gotView(view) {
+      this.setState(view.newState);
+    }
+  }, {
+    key: 'clickHandler',
+    value: function clickHandler(value, index) {
+      this.channel.push("clicked", { number: index, letter: value }).receive("ok", this.gotView.bind(this));
+    }
+  }, {
+    key: 'reset',
+    value: function reset() {
+      this.channel.push("reset", {}).receive("ok", this.gotView.bind(this));
+      document.getElementById("clickStatus").innerHTML = "Game Started Again!!";
     }
   }, {
     key: 'getClassNames',
@@ -41478,23 +41449,19 @@ var Memgrid = function (_React$Component) {
         { className: 'row' },
         _react2.default.createElement(
           'div',
-          { className: 'col-6' },
+          { className: 'col-sm-6' },
           _react2.default.createElement(
             'div',
             { className: 'Board', id: 'Board' },
             Tiles.map(function (each, i) {
-              return _react2.default.createElement(Tile, { className: _this2.getClassNames(each), onClick: function onClick() {
-                  _this2.updateState(each, i);
-                }, value: each, key: i });
+              return _react2.default.createElement(Tile, { className: _this2.getClassNames(each), onClick: _this2.clickHandler.bind(_this2, each, i), value: each, key: i });
             })
           )
         ),
         _react2.default.createElement(
           'div',
-          { className: 'col-6' },
-          _react2.default.createElement(Score, { value: this.state.score, onClick: function onClick() {
-              _this2.reset();
-            } })
+          { className: 'col-sm-6' },
+          _react2.default.createElement(Score, { value: this.state.score, onClick: this.reset.bind(this), Clicks: this.state.clicks })
         )
       );
     }
@@ -41514,7 +41481,6 @@ function Tile(props) {
     )
   );
 }
-$(loadTiles);
 
 function Score(props) {
   return _react2.default.createElement(
@@ -41531,7 +41497,16 @@ function Score(props) {
       _reactstrap.Button,
       { className: 'btn btn-primary', onClick: props.onClick },
       'Reset Game '
-    )
+    ),
+    _react2.default.createElement('br', null),
+    _react2.default.createElement(
+      'strong',
+      null,
+      'Number of Clicks : ',
+      props.Clicks,
+      ' '
+    ),
+    _react2.default.createElement('div', { id: 'clickStatus' })
   );
 }
 
@@ -41546,7 +41521,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _phoenix = require("phoenix");
 
-//let socket = new Socket("/socket", {params: {token: window.userToken}});
+var socket = new _phoenix.Socket("/socket", { params: { token: window.userToken } });
 
 // When you connect, you'll often need to authenticate the client.
 // For example, imagine you have an authentication plug, `MyAuth`,
@@ -41592,20 +41567,14 @@ var _phoenix = require("phoenix");
 // Finally, pass the token on connect as below. Or remove it
 // from connect if you don't care about authentication.
 
-socket.connect();
-
-// Now that you are connected, you can join channels with a topic:
 // NOTE: The contents of this file will only be executed if
 // you uncomment its entry in "assets/js/app.js".
 
 // To use Phoenix channels, the first step is to import Socket
 // and connect at the socket path in "lib/web/endpoint.ex":
-var channel = socket.channel("topic:subtopic", {});
-channel.join().receive("ok", function (resp) {
-  console.log("Joined successfully", resp);
-}).receive("error", function (resp) {
-  console.log("Unable to join", resp);
-});
+socket.connect();
+
+// Now that you are connected, you can join channels with a topic:
 
 exports.default = socket;
 

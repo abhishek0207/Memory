@@ -7,6 +7,9 @@ body {
   display: flex;
   color:white;
 }
+#game {
+  margin-top:50px;
+}
 .side { padding: 4ex; text-align: center; }
 h1 { text-align: center; }
 table {border: 1px solid black;}
@@ -37,6 +40,7 @@ td {border:1px solid black;}
  background: #0074d9;
  border-radius: 5px;
  color: #FFF;
+ font-size:30px;
 }
 .opened{
  background: White;

@@ -6032,6 +6032,9 @@ body {
   display: flex;
   color: white; }
 
+#game {
+  margin-top: 50px; }
+
 .side {
   padding: 4ex;
   text-align: center; }
@@ -6071,7 +6074,8 @@ td {
 .unopened {
   background: #0074d9;
   border-radius: 5px;
-  color: #FFF; }
+  color: #FFF;
+  font-size: 30px; }
 
 .opened {
   background: White;
