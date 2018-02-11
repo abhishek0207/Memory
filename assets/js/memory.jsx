@@ -80,8 +80,13 @@ class Memgrid extends React.Component {
 
   clickHandler(value, index)
   {
-    this.channel.push("clicked", {number: index, letter:value })
-                .receive("ok", this.gotView.bind(this))
+    let visibleArray = this.state.visible;
+    if(visibleArray[index] == "X")
+    {
+      this.channel.push("clicked", {number: index, letter:value })
+                  .receive("ok", this.gotView.bind(this))
+    }
+
   }
 
   reset(){
