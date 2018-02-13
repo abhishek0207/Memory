@@ -41418,7 +41418,10 @@ var Memgrid = function (_React$Component) {
   }, {
     key: 'clickHandler',
     value: function clickHandler(value, index) {
-      this.channel.push("clicked", { number: index, letter: value }).receive("ok", this.gotView.bind(this));
+      var visibleArray = this.state.visible;
+      if (visibleArray[index] == "X") {
+        this.channel.push("clicked", { number: index, letter: value }).receive("ok", this.gotView.bind(this));
+      }
     }
   }, {
     key: 'reset',
